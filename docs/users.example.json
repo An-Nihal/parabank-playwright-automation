@@ -1,0 +1,18 @@
+[
+  {
+    "username": "drip_qa_m1x2y3",
+    "password": "Test@1234",
+    "repeatedPassword": "Test@1234",
+    "firstName": "Aaron",
+    "lastName": "Weber",
+    "address": "742 Evergreen Terrace",
+    "city": "Springfield",
+    "state": "Oregon",
+    "zipCode": "97477",
+    "phone": "5035550147",
+    "ssn": "512-88-1902",
+    "accounts": ["12345", "12346"],
+    "createdAt": "2026-09-16T09:00:00.000Z",
+    "source": "seeded"
+  }
+]

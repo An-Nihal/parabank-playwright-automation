@@ -1,0 +1,71 @@
+name: ParaBank UI tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Full regression every night at 02:00 UTC.
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  # Every pull request runs the critical path only: fast feedback, and it is the
+  # set the specification says must fail the pipeline.
+  p1:
+    name: P1 critical path
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm run lint:locators
+      - name: Run P1 tests
+        run: npx playwright test --grep @P1
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://parabank.parasoft.com' }}
+          STATIC_USERNAME: ${{ secrets.STATIC_USERNAME }}
+          STATIC_PASSWORD: ${{ secrets.STATIC_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-p1
+          path: playwright-report/
+          retention-days: 14
+
+  # The whole suite, nightly.
+  full:
+    name: Full regression
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm run lint:locators
+      - name: Run the full suite
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://parabank.parasoft.com' }}
+          STATIC_USERNAME: ${{ secrets.STATIC_USERNAME }}
+          STATIC_PASSWORD: ${{ secrets.STATIC_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-full
+          path: playwright-report/
+          retention-days: 14

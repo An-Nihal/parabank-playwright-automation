@@ -1,0 +1,27 @@
+{
+  "name": "parabank-automation",
+  "version": "1.0.0",
+  "description": "ParaBank UI test automation framework - Playwright + TypeScript, Page Object Model with a dedicated locators layer",
+  "scripts": {
+    "test": "playwright test",
+    "test:p1": "playwright test --grep @P1",
+    "test:p2": "playwright test --grep @P2",
+    "test:p3": "playwright test --grep @P3",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "lint:locators": "node scripts/check-locator-layer.js",
+    "seed:user": "node scripts/seed-user.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.0",
+    "dotenv": "^17.4.2",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}
