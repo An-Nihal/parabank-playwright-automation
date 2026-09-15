@@ -13,9 +13,11 @@ export default defineConfig({
    * unbounded locally. The public ParaBank demo sits behind Cloudflare and
    * starts returning HTTP 429 (Error 1015, "You are being rate limited") when a
    * machine opens too many sessions at once - unbounded local workers trip it
-   * reliably. Override with PW_WORKERS when running against a local instance.
+   * reliably, and a GitHub-hosted runner (a shared datacenter IP that Cloudflare
+   * already distrusts) trips it with two. Override with PW_WORKERS when running
+   * against a local instance.
    */
-  workers: Number(process.env.PW_WORKERS) || (process.env.CI ? 2 : 3),
+  workers: Number(process.env.PW_WORKERS) || (process.env.CI ? 1 : 3),
   timeout: 60_000,
   expect: { timeout: 10_000 },
   reporter: [['html', { open: 'never' }], ['list']],

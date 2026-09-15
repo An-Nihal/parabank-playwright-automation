@@ -294,7 +294,9 @@ The public instance is shared and sits behind Cloudflare. Two consequences:
 
 - **Rate limiting.** Too many concurrent sessions returns HTTP 429
   (*Error 1015 — You are being rate limited*) for a few minutes. Workers default
-  to 3 locally and 2 in CI for this reason; raise with `PW_WORKERS` against a
+  to 3 locally and **1 in CI** - a GitHub-hosted runner is a shared datacenter IP
+  that Cloudflare already distrusts, and two workers there were enough to turn
+  the second half of a run into timeouts. Raise with `PW_WORKERS` against a
   local instance.
 - **Bot protection on registration.** `POST /parabank/register.htm` is
   intermittently challenged with a Cloudflare interstitial. The registration
