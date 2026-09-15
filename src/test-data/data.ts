@@ -102,9 +102,9 @@ export const staticUser: User = {
   zipCode: '90210',
   phone: '310-447-4121',
   ssn: '111-11-1111',
-  username: process.env.STATIC_USERNAME ?? 'parabank_qa01',
-  password: process.env.STATIC_PASSWORD ?? 'Test@1234',
-  repeatedPassword: process.env.STATIC_PASSWORD ?? 'Test@1234',
+  username: process.env.STATIC_USERNAME || 'parabank_qa01',
+  password: process.env.STATIC_PASSWORD || 'Test@1234',
+  repeatedPassword: process.env.STATIC_PASSWORD || 'Test@1234',
 };
 
 /** TD_USER_NEW - the fixed half. DataFactory adds the unique username and SSN. */
@@ -139,7 +139,7 @@ export const emptyUser: User = {
 
 /** TD_LOGIN_BAD_PWD */
 export const badPasswordLogin = {
-  username: process.env.STATIC_USERNAME ?? 'parabank_qa01',
+  username: process.env.STATIC_USERNAME || 'parabank_qa01',
   password: 'WrongPass!99',
 } as const;
 
