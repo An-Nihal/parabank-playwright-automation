@@ -48,7 +48,7 @@ npm run lint:locators         # no raw selectors outside src/locators, no waits,
 | Tag | Meaning |
 |---|---|
 | `@P1` | Critical path. 32 tests. Runs on every PR and must pass. |
-| `@P2` | Important. 22 tests. Nightly. |
+| `@P2` | Important. 22 tests. Part of the full suite, run on demand. |
 | `@P3` | Low risk / cosmetic. 9 tests. Full regression only. |
 | `@register`, `@login`, `@transferFunds`, … | One tag per module. |
 | `@e2e`, `@calculation`, `@security`, `@smoke` | Test type, mirroring the specification. |
