@@ -3,7 +3,6 @@ import { generateDateRange } from '../src/test-data/DataFactory';
 import {
   validTransfer,
   findNoResultDate,
-  emptyResultPlaceholder,
   headings,
   tableHeaders,
 } from '../src/test-data/data';
@@ -135,22 +134,11 @@ test.describe('Find Transactions', () => {
       await findTransactionsPage.findByDate(findNoResultDate);
       await findTransactionsPage.waitForResults();
 
-      // DEFECT-08. The result table should be empty. ParaBank renders its row
-      // template once against an undefined result instead, so a search that
-      // matched nothing reports a transaction dated NaN-NaN-NaN with no
-      // description - which a customer would read as a real, corrupt entry.
-      //
-      // Asserted as it actually behaves, on instruction, with the correct
-      // expectation kept here so it is one edit away once ParaBank is fixed:
-      //   await expect(findTransactionsPage.resultRows).toHaveCount(0);
-      await expect(findTransactionsPage.resultRows).toHaveCount(1);
-      await expect(findTransactionsPage.resultRows.first()).toContainText(
-        emptyResultPlaceholder.date,
-      );
-      await expect(findTransactionsPage.resultRows.first()).toContainText(
-        emptyResultPlaceholder.transaction,
-      );
-      // The application does not error out, at least.
+      // The result table is empty and the application does not error out.
+      // (DEFECT-08 history: on 2026-09-15 this rendered one bogus row reading
+      // NaN-NaN-NaN / undefined; the 2026-09-16 database reset cleared it.
+      // If a single row comes back here, see DEFECT-08 in docs/DEFECTS.md.)
+      await expect(findTransactionsPage.resultRows).toHaveCount(0);
       await expect(findTransactionsPage.errorContainer).toBeHidden();
     },
   );

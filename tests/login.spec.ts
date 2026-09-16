@@ -48,32 +48,20 @@ test.describe('Login / Logout', () => {
       await loginPage.goto();
       await loginPage.login(badPasswordLogin.username, badPasswordLogin.password);
 
-      // DEFECT-07 (critical, broken authentication). By the specification this
-      // must fail with 'Error!' and errors.badCredentials. The live application
-      // instead ESTABLISHES A SESSION and serves the Accounts Overview - and not
-      // even for the account whose username was supplied, but for an unrelated
-      // customer, exposing their accounts.
-      //
-      // This was verified working correctly earlier in the same session, so it
-      // is a regression in the demo, not long-standing behaviour.
-      //
-      // Asserted as it actually behaves, on instruction, so the suite reports
-      // the real state of the application. The correct expectation is kept below
-      // in a comment so the intended assertion is one edit away once ParaBank is
-      // fixed, at which point this test fails and points at docs/DEFECTS.md.
-      //
-      //   await expect(loginPage.errorTitle).toHaveText(headings.error);
-      //   await expect(loginPage.loginError).toHaveText(errors.badCredentials);
-      //
-      // The customer identity is deliberately not asserted: it varies between
-      // attempts (John Smith and Hazel Melvin were both observed), which is
-      // itself evidence that a foreign session is being handed out.
-      await expect(loginPage.page).toHaveURL(/overview\.htm/);
-      await expect(loginPage.page).toHaveTitle(titles.overview);
-      await expect(overviewPage.heading).toHaveText(headings.accountsOverview);
-      await expect(overviewPage.logoutLink).toBeVisible();
+      // DEFECT-07 history. For part of 2026-09-15 the demo ESTABLISHED A SESSION
+      // here - for an unrelated customer - and this test asserted that broken
+      // behaviour on instruction. The behaviour vanished when Parasoft reset the
+      // demo database on 2026-09-16 (it was corrupted state, not code), so the
+      // specification's expectation is back in force. docs/DEFECTS.md keeps the
+      // full record and evidence.
+      await expect(loginPage.errorTitle).toHaveText(headings.error);
+      await expect(loginPage.loginError).toHaveText(errors.badCredentials);
+      // No session was created: the protected menu is absent.
+      await expect(overviewPage.logoutLink).toHaveCount(0);
+      await expect(loginPage.page).not.toHaveTitle(titles.overview);
 
-      // Still our mess to clean up, even though the session should not exist.
+      // Nothing to log out of, but the helper is tolerant and it keeps the
+      // "every login is followed by a logout" invariant trivially true.
       await logout(page, context);
     },
   );
@@ -85,17 +73,12 @@ test.describe('Login / Logout', () => {
       await loginPage.goto();
       await loginPage.login(badUserLogin.username, badUserLogin.password);
 
-      // DEFECT-07 again, and worse: the username does not exist at all, yet a
-      // session is issued for some other customer. The specification expects the
-      // same errors.badCredentials message as TC_LGN_002 - correct behaviour,
-      // revealing nothing about which usernames are real.
-      //
-      // The intended assertion, for when the application is fixed:
-      //   await expect(loginPage.errorTitle).toHaveText(headings.error);
-      //   await expect(loginPage.loginError).toHaveText(errors.badCredentials);
-      await expect(loginPage.page).toHaveURL(/overview\.htm/);
-      await expect(overviewPage.heading).toHaveText(headings.accountsOverview);
-      await expect(overviewPage.logoutLink).toBeVisible();
+      // The same message as TC_LGN_002, deliberately: a distinct "no such user"
+      // message would reveal which usernames exist. (See TC_LGN_002 for the
+      // DEFECT-07 history - this case was affected identically.)
+      await expect(loginPage.errorTitle).toHaveText(headings.error);
+      await expect(loginPage.loginError).toHaveText(errors.badCredentials);
+      await expect(overviewPage.logoutLink).toHaveCount(0);
 
       await logout(page, context);
     },

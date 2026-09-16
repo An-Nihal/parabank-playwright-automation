@@ -263,17 +263,20 @@ Credentials come from `.env` (git-ignored, along with `.auth/`):
 
 ```ini
 BASE_URL=https://parabank.parasoft.com
-STATIC_USERNAME=parabank_qa01
-STATIC_PASSWORD=Test@1234
+STATIC_USERNAME=john
+STATIC_PASSWORD=demo
 ```
 
 ---
 
 ## Known ParaBank behaviours
 
-The application deviates from the specification in several places. Each is
-asserted **as it actually behaves**, with the gap recorded rather than written as
-a failing test — see `docs/DEFECTS.md` for the full list and reproduction steps.
+The application has deviated from the specification in ten places so far. The
+two the specification marks *Partial* (DEFECT-01/02) and the two message
+deviations are asserted **as the application actually behaves**; the rest were
+state-related and were cleared when Parasoft reset the demo database (ENV-05),
+so their tests assert the specified behaviour again. `docs/DEFECTS.md` has every
+record with reproduction steps and evidence.
 
 | ID | Summary |
 |---|---|
@@ -283,10 +286,10 @@ a failing test — see `docs/DEFECTS.md` for the full list and reproduction step
 | DEFECT-04 | A non-numeric transfer amount does the same. |
 | DEVIATION-05 | A successful Customer Lookup logs the customer in instead of showing their credentials. |
 | DEVIATION-06 | The loan denial message differs from the one quoted in the specification. |
-| **DEFECT-07** | **Critical: a failed login is granted another customer's session.** A wrong password, or a username that does not exist, signs you in as an unrelated customer and exposes their accounts. |
-| DEFECT-08 | A Find Transactions search that matches nothing renders one corrupt row (`NaN-NaN-NaN` / `undefined`) instead of an empty table. |
-| DEFECT-09 | A bill payment is confirmed on screen but never debits the account or appears in its history. |
-| DEFECT-10 | Update Contact Info fails with `An internal error has occurred and has been logged.` for valid data. |
+| **DEFECT-07** | **Critical: a failed login is granted another customer's session.** Observed 2026-09-15; cleared by the 2026-09-16 database reset (ENV-05). Recorded with evidence. |
+| DEFECT-08 | A Find Transactions search that matches nothing rendered one corrupt row (`NaN-NaN-NaN` / `undefined`). Cleared by the 2026-09-16 reset. |
+| DEFECT-09 | A bill payment was confirmed on screen but never debited the account. Cleared by the 2026-09-16 reset. |
+| DEFECT-10 | Update Contact Info failed with `An internal error has occurred` for valid data. Cleared by the 2026-09-16 reset. |
 
 ## Running against the public demo
 

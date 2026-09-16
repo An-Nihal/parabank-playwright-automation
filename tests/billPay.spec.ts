@@ -48,18 +48,12 @@ test.describe('Bill Pay', () => {
       await overviewPage.goto();
       const balanceAfter = await overviewPage.getBalance(freshAccount);
 
-      // DEFECT-09. The Bill Pay confirmation reports the payment complete, yet
-      // the source account is never debited: the balance is identical before
-      // and after. Reproduced on a customer registered minutes earlier as well
-      // as on the long-lived one, so it is the application, not the data.
-      // (Transfers between accounts DO post - see the @transferFunds cases -
-      // which isolates this to bill payment.)
-      //
-      // Asserted as it actually behaves, on instruction. The intended assertion
-      // is kept here so it is one edit away once ParaBank is fixed:
-      //   expect(toMoney(balanceBefore - balanceAfter)).toBe(amount);
-      expect(amount).toBeGreaterThan(0); // the payment itself was a real amount
-      expect(toMoney(balanceBefore - balanceAfter)).toBe(0);
+      // DEFECT-09 history: for a period on 2026-09-15 the confirmation page
+      // reported the payment complete while nothing was debited. That state was
+      // wiped by the demo database reset of 2026-09-16 (ENV-05) and the intended
+      // rule holds again. If this assertion starts failing with a delta of 0,
+      // see DEFECT-09 in docs/DEFECTS.md before touching the test.
+      expect(toMoney(balanceBefore - balanceAfter)).toBe(amount);
     },
   );
 
@@ -146,13 +140,9 @@ test.describe('Bill Pay', () => {
           row.debit === expectedAmount,
       );
 
-      // DEFECT-09, seen from the ledger side: the payment the confirmation page
-      // reported never reaches the account history. The intended assertion is
-      // kept for when ParaBank is fixed:
-      //   expect(payment).toBeDefined();
-      expect(payment).toBeUndefined();
-      // The history itself rendered - this is a missing entry, not a missing table.
-      expect(transactions.length).toBeGreaterThan(0);
+      // See TC_BIL_002 for the DEFECT-09 history; the ledger entry is expected
+      // again since the 2026-09-16 reset.
+      expect(payment).toBeDefined();
     },
   );
 });

@@ -123,7 +123,16 @@ used when the loan amount rather than the down payment is the blocker.
 
 ## DEFECT-07 — Broken authentication: a failed login is granted another customer's session
 
-**Tests:** `TC_LGN_002`, `TC_LGN_003` (`@security`) · **Severity: critical**
+**Tests:** `TC_LGN_002`, `TC_LGN_003` (`@security`) · **Severity: critical** ·
+**Status: no longer reproducible since the demo database reset of 2026-09-16**
+
+> **Resolution note.** On 2026-09-16 Parasoft reset the public demo database
+> (ENV-05). Immediately afterwards a wrong password and an unknown username were
+> both refused with `The username and password could not be verified.` - the
+> specified behaviour. The bypass therefore lived in corrupted *data or session
+> state*, not in code that was changed, and could return the next time the
+> shared instance degrades. `TC_LGN_002` and `TC_LGN_003` assert the correct
+> behaviour again; the record below is kept as evidence of what was observed.
 
 ParaBank does not verify the password. A login with the wrong password, or with a
 username that does not exist at all, is **granted an authenticated session for an
@@ -172,12 +181,14 @@ application and stays green. Each test carries the correct assertion alongside i
 in a comment, so restoring the intended expectation is a one-line edit. They
 deliberately do **not** assert which customer is returned, because that varies.
 
-When ParaBank is fixed these two tests will fail, which is the intended signal to
-come back to this entry and restore the commented-out assertions.
+That signal fired on 2026-09-16 (see the resolution note above) and the intended
+assertions were restored the same day.
 
 ---
 
 ## DEFECT-08 - A search that matches nothing renders a corrupt transaction row
+
+> **Status: not reproducible since the demo database reset of 2026-09-16 (ENV-05).** The affected test asserts the specified behaviour again; this record is kept as evidence.
 
 | | |
 |---|---|
@@ -209,6 +220,8 @@ expectation kept in a comment directly above it.
 
 ## DEFECT-09 - A completed bill payment is never posted to the account
 
+> **Status: not reproducible since the demo database reset of 2026-09-16 (ENV-05).** The affected test asserts the specified behaviour again; this record is kept as evidence.
+
 | | |
 |---|---|
 | **Severity** | High |
@@ -238,6 +251,8 @@ is the part that works.
 
 ## DEFECT-10 - Update Contact Info fails with a server error
 
+> **Status: not reproducible since the demo database reset of 2026-09-16 (ENV-05).** The affected test asserts the specified behaviour again; this record is kept as evidence.
+
 | | |
 |---|---|
 | **Severity** | High |
@@ -266,6 +281,27 @@ overwritten. Both keep the intended assertions in comments.
 These are properties of the public demo deployment, recorded so the results are
 not misread as suite defects.
 
+### ENV-05 — The demo database is reset without notice
+
+Parasoft periodically resets the public ParaBank database (the Admin page also
+lets *anyone* do it). When that happens every registered customer disappears at
+once: on 2026-09-16 the static customer `parabank_qa01`, a customer registered
+the day before and every entry in the local pool all started answering
+`The username and password could not be verified.` A CI run on a fresh runner -
+no pool, registration challenged by Cloudflare (ENV-01) - therefore had no way to
+sign in at all and failed in its setup step.
+
+Handling:
+
+- The static fallback is now `john` / `demo`, the customer ParaBank seeds itself,
+  which the reset recreates rather than deletes.
+- `tests/auth.setup.ts` drops any pooled customer that can no longer sign in, so
+  a reset costs one login timeout per stale entry exactly once.
+- A reset also wipes whatever *state* the known defects lived in: DEFECT-07
+  disappeared with this one. Tests that assert a defect are therefore expected
+  to flip back to the specified behaviour after a reset, and that flip is the
+  signal to restore their intended assertions.
+
 ### ENV-01 — Cloudflare challenges the registration POST
 
 `POST /parabank/register.htm` is intermittently answered with a Cloudflare
@@ -286,7 +322,7 @@ a local ParaBank for a deterministic result.
 
 Sustained parallel traffic returns HTTP 429 (*Error 1015 — You are being rate
 limited*) for several minutes, failing whatever is running. Mitigated by capping
-workers (3 local / 2 CI) and by preferring the `accountWithTransactions` fixture
+workers (3 local / 1 CI) and by preferring the `accountWithTransactions` fixture
 over opening an account per test.
 
 ### ENV-03 — Server timezone differs from the runner

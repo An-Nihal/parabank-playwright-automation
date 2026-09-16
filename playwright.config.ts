@@ -26,8 +26,10 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 15_000,
-    navigationTimeout: 30_000,
+    // The public demo answers slowly at times (a failed login was measured at
+    // ~30 s during a database reset), so both limits sit above the defaults.
+    actionTimeout: 20_000,
+    navigationTimeout: 45_000,
   },
   /**
    * RUN ORDER

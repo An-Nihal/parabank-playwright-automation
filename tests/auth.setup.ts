@@ -3,7 +3,7 @@ import { RegisterPage } from '../src/pages/RegisterPage';
 import { staticUser, titles } from '../src/test-data/data';
 import { generateUser } from '../src/test-data/DataFactory';
 import { User } from '../src/test-data/data';
-import { addUser, readUsers, healthyUsers, REGISTRY_PATH } from '../src/test-data/UserRegistry';
+import { addUser, readUsers, removeUser, healthyUsers, REGISTRY_PATH } from '../src/test-data/UserRegistry';
 import { login, logout, getAccountIds, hasWorkingSession } from '../src/fixtures/session';
 
 /**
@@ -24,7 +24,9 @@ import { login, logout, getAccountIds, hasWorkingSession } from '../src/fixtures
  *      old customer is how TC_LON_001 / TC_LON_003 silently start failing.
  *   2. If registration was challenged by the bot protection (ENV-01), reuse a
  *      healthy customer already in the pool.
- *   3. If the pool has none, fall back to the static customer from .env.
+ *   3. If the pool has none, fall back to the static customer from .env - by
+ *      default john/demo, the customer ParaBank seeds itself and therefore the
+ *      only one that survives a reset of the demo database (ENV-05).
  *
  * Only if all three fail does this project fail - and at that point there is
  * genuinely no way to sign in, so failing fast beats 60 confusing red tests.
@@ -70,7 +72,10 @@ setup('register a customer and seed the registry', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
-    const candidates = [...healthyUsers(HEALTHY_ACCOUNT_LIMIT), ...readUsers()];
+    const seen = new Set<string>();
+    const candidates = [...healthyUsers(HEALTHY_ACCOUNT_LIMIT), ...readUsers()].filter(
+      (candidate) => !seen.has(candidate.username) && seen.add(candidate.username),
+    );
     for (const pooled of candidates) {
       if (await signInWorks(page, pooled)) {
         await getAccountIds(page, pooled); // refresh the cached account ids
@@ -78,6 +83,11 @@ setup('register a customer and seed the registry', async ({ browser }) => {
         annotate(`Reusing pooled customer ${pooled.username} (${REGISTRY_PATH})`);
         return;
       }
+      // A pooled customer that cannot sign in no longer exists: Parasoft has
+      // reset the demo database (ENV-05). Forget it, or every later run pays a
+      // login timeout for it before reaching a customer that works.
+      removeUser(pooled.username);
+      annotate(`Dropped ${pooled.username} from the pool - it can no longer sign in (ENV-05)`);
       await logout(page, context);
     }
 

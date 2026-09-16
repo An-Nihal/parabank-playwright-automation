@@ -101,10 +101,14 @@ export const staticUser: User = {
   state: 'CA',
   zipCode: '90210',
   phone: '310-447-4121',
-  ssn: '111-11-1111',
-  username: process.env.STATIC_USERNAME || 'parabank_qa01',
-  password: process.env.STATIC_PASSWORD || 'Test@1234',
-  repeatedPassword: process.env.STATIC_PASSWORD || 'Test@1234',
+  ssn: '622-11-9999',
+  // `john` / `demo` is the customer ParaBank seeds itself. Parasoft resets the
+  // public demo database without notice and every registered customer vanishes
+  // with it (ENV-05 in docs/DEFECTS.md) - this one is recreated by the reset, so
+  // it is the only fallback that survives. Override through .env / CI secrets.
+  username: process.env.STATIC_USERNAME || 'john',
+  password: process.env.STATIC_PASSWORD || 'demo',
+  repeatedPassword: process.env.STATIC_PASSWORD || 'demo',
 };
 
 /** TD_USER_NEW - the fixed half. DataFactory adds the unique username and SSN. */
@@ -217,18 +221,6 @@ export const findByAmount = '25.00';
 /** TD_FIND_NO_RESULT */
 export const findNoResultDate = '01-01-2000';
 
-/**
- * What a Find Transactions search renders when nothing matches (DEFECT-08).
- *
- * The correct result is an empty table. ParaBank instead runs its row template
- * once over an undefined result, producing a single placeholder row with an
- * unparseable date and no description. Asserted rather than hidden, so the
- * suite reports the application as it is; see docs/DEFECTS.md.
- */
-export const emptyResultPlaceholder = {
-  date: 'NaN-NaN-NaN',
-  transaction: 'undefined',
-} as const;
 
 /** TD_LOAN_APPROVED */
 export const approvedLoan: LoanRequest = {

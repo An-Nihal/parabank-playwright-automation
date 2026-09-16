@@ -1,6 +1,6 @@
 import { test, expect } from '../src/fixtures/test-fixtures';
 import { generateProfileUpdate } from '../src/test-data/DataFactory';
-import { headings, errors } from '../src/test-data/data';
+import { headings, messages, errors } from '../src/test-data/data';
 
 // The static customer is shared, and these tests rewrite its contact details.
 // Running them serially keeps one test from overwriting another's expectation.
@@ -38,19 +38,12 @@ test.describe('Update Contact Info', () => {
       await updateProfilePage.goto();
       await updateProfilePage.updateProfileAndWait(newProfile);
 
-      // DEFECT-10. A valid update should show 'Profile Updated' with
-      // messages.profileUpdated. The live application instead fails the update
-      // call server side and shows its generic error panel - for a customer
-      // registered minutes earlier as well as for the long-lived one, so this
-      // is the application, not the data.
-      //
-      // Asserted as it actually behaves, on instruction. The intended assertion
-      // is kept here so it is one edit away once ParaBank is fixed:
-      //   await expect(updateProfilePage.resultTitle).toHaveText(headings.profileUpdated);
-      //   await expect(updateProfilePage.resultMessage).toHaveText(messages.profileUpdated);
-      await expect(updateProfilePage.errorTitle).toHaveText(headings.error);
-      await expect(updateProfilePage.errorText).toHaveText(errors.internalError);
-      await expect(updateProfilePage.resultPanel).toBeHidden();
+      // DEFECT-10 history: on 2026-09-15 this call failed server side with the
+      // generic error panel for every customer; the 2026-09-16 database reset
+      // (ENV-05) cleared it. If the error panel shows here again, see DEFECT-10.
+      await expect(updateProfilePage.resultTitle).toHaveText(headings.profileUpdated);
+      await expect(updateProfilePage.resultMessage).toHaveText(messages.profileUpdated);
+      await expect(updateProfilePage.errorPanel).toBeHidden();
     },
   );
 
@@ -80,9 +73,7 @@ test.describe('Update Contact Info', () => {
       await test.step('update the profile', async () => {
         await updateProfilePage.goto();
         await updateProfilePage.updateProfileAndWait(newProfile);
-        // DEFECT-10, as in TC_UPD_002: the update is rejected with the generic
-        // server error rather than accepted.
-        await expect(updateProfilePage.errorTitle).toHaveText(headings.error);
+        await expect(updateProfilePage.resultTitle).toHaveText(headings.profileUpdated);
       });
 
       await test.step('navigate away from the page', async () => {
@@ -92,23 +83,13 @@ test.describe('Update Contact Info', () => {
       await updateProfilePage.goto();
       const stored = await updateProfilePage.getProfile();
 
-      // What persists is therefore the OLD profile. The specification expects
-      // every field to equal the submitted value; the correct assertions are
-      // kept for when the application is fixed:
-      //   expect(stored.address).toBe(newProfile.address);
-      //   expect(stored.city).toBe(newProfile.city);
-      //   expect(stored.state).toBe(newProfile.state);
-      //   expect(stored.zipCode).toBe(newProfile.zipCode);
-      //   expect(stored.phone).toBe(newProfile.phone);
-      // Only the address is compared: it carries a per-run unique suffix, so
-      // "not equal" is a genuine check that the failed update did not apply.
-      // City, state, zip and phone are fixed values in the factory and a
-      // successful update in the past (before DEFECT-10 appeared) has already
-      // left some pooled customers holding exactly those, so they prove nothing.
-      expect(stored.address).not.toBe(newProfile.address);
-      // And the profile is still intact, not blanked by the failed call.
-      expect(stored.firstName).not.toBe('');
-      expect(stored.lastName).not.toBe('');
+      // Every submitted value survived the round trip. The address carries a
+      // per-run unique suffix, so this cannot pass on stale data.
+      expect(stored.address).toBe(newProfile.address);
+      expect(stored.city).toBe(newProfile.city);
+      expect(stored.state).toBe(newProfile.state);
+      expect(stored.zipCode).toBe(newProfile.zipCode);
+      expect(stored.phone).toBe(newProfile.phone);
     },
   );
 });

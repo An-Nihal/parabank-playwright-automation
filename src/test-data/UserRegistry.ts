@@ -165,6 +165,21 @@ export function addUser(
 }
 
 /**
+ * Drops a customer from the pool. Used when a pooled customer can no longer sign
+ * in - which happens wholesale when Parasoft resets the demo database (ENV-05):
+ * every registered customer disappears at once and would otherwise be retried,
+ * at a login timeout each, on every subsequent run.
+ */
+export function removeUser(username: string): void {
+  mutate((users) => {
+    const at = users.findIndex((candidate) => candidate.username === username);
+    if (at >= 0) {
+      users.splice(at, 1);
+    }
+  });
+}
+
+/**
  * Caches the account ids a customer owns, so later runs can skip the Accounts
  * Overview round trip. Unknown usernames are ignored rather than throwing.
  */
